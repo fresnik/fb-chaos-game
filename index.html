@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chaos Attractor</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/slider.css">
+    <link rel="stylesheet" href="css/help-tip.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script type="application/javascript" src="http://psychedelicdevelopment.com/grahamscan/grahamscan.js" ></script>
+    <script type="application/javascript" src="js/bootstrap-slider.js" ></script>
+</head>
+<body>
+    <div class="container">
+    <div class="row">
+    <div class="col-md-7 col-xs-9" style="border:1px solid black">
+        <canvas id="myCanvas" width="500" height="500"></canvas>
+    </div>
+
+    <div class="col-md-5 col-xs-9" style="border:1px solid black">
+    <br/>
+        <div>
+            <button class="btn btn-default" onclick="resetCanvas();"><span title="Reset" class="glyphicon glyphicon-remove"></span></button>
+            <button class="btn btn-default" onclick="randomizeVertices();"><span title="Randomize" class="glyphicon glyphicon-random"></span></button>
+            <button class="btn btn-info" onclick="togglePlay();" id="playButton"><span title="Play" class="glyphicon glyphicon-play"></span></button>
+            <button class="btn btn-info" onclick="togglePlay();" id="pauseButton" style="display:none;"><span title="Pause" class="glyphicon glyphicon-pause"></span></button>
+            <button class="btn btn-default" onclick="stepTrace();"><span title="Step" class="glyphicon glyphicon-step-forward"></span></button>
+            <input type="hidden" id="randomSeed" value="1337" />
+        </div>
+        <div class="row">
+            <div class="col-md-4">Trace count:</div>
+            <div class="col-md-8"><span id="traceCount">0</span></div>
+        </div>
+        <div class="row">
+            <div class="col-md-4">Movement:</div>
+            <div class="col-md-8">
+                <input type="text" class="span2" id="movePct" value="" data-slider-min="0" data-slider-max="100" data-slider-step="5" data-slider-value="50" data-slider-orientation="horizontal" data-slider-selection="after" data-slider-tooltip="show">
+                &nbsp;<span data-toggle="tooltip" title="How far (in percentage) the tracepoint should move towards a vertex" class="glyphicon glyphicon-question-sign"></span>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4">Vertex count:</div>
+            <div class="col-md-8">
+                <input type="text" class="span2" id="vertexCount" value="" data-slider-min="3" data-slider-max="10" data-slider-step="1" data-slider-value="5" data-slider-orientation="horizontal" data-slider-selection="after" data-slider-tooltip="show">
+            </div>
+        </div>
+        <div class="dropdown">
+            <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                Presets
+                <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+                <li><a href="#" onclick="setPresetTriangle();">Triangle</a></li>
+                <li><a href="#" onclick="setPresetSquare();">Square</a></li>
+            </ul>
+        </div>
+    <br/>
+    </div>
+    </div>
+    </div>
+
+    <script>
+    var vertices = [];
+    var c = document.getElementById("myCanvas");
+    var tracePoint = { x: Math.random() * c.width, y: Math.random() * c.height };
+    var ctx = c.getContext("2d");
+    c.addEventListener("mousemove", onCanvasMouseMove, false);
+    c.addEventListener("mousedown", onCanvasMouseDown, false);
+    c.addEventListener("mouseup", onCanvasMouseUp, false);
+    var timeout = undefined;
+    var selectedVertex = undefined;
+    var isMouseDown = false;
+    var traceCount = 0;
+    var tracePointMovement = 0.5;
+    var movePctSlider, vertexCountSlider;
+
+    $(function() {
+        $("#movePct").slider().on("slideStart", function() { resetCanvas(); });
+        movePctSlider = $("#movePct").slider().on("slideStop", function(ev) { resetCanvas(); }).data('slider');
+        $("#vertexCount").slider().on("slideStart", function() { resetCanvas(); });
+        vertexCountSlider = $("#vertexCount").slider().on("slideStop", function(ev) { randomizeVertices(); resetCanvas(); }).data('slider');
+        $('[data-toggle="tooltip"]').tooltip(); 
+        randomizeVertices();
+        resetCanvas();
+    });
+
+    function resetCountAndStopTrace() {
+        traceCount = 0;
+        document.getElementById("traceCount").innerText = traceCount;
+        document.getElementById("playButton").style = "display: inline;";
+        document.getElementById("pauseButton").style = "display: none;";
+        stopTrace();
+    }
+
+    // Randomize the vertices and make sure we have a convex hull
+    function randomizeVertices() {
+        resetCountAndStopTrace();
+
+        var vc = vertexCountSlider.getValue();
+        console.log(vc);
+        vertices = [];
+        var indices = undefined;
+
+        while (indices === undefined || indices === null || indices.length !== vertices.length) {
+            for (var i = 0; i < vc; i++) {
+                vertices[i] = { x: Math.random() * c.width, y: Math.random() * c.height };
+            }
+            var hull = new ConvexHull();
+            hull.compute(vertices);
+            indices = hull.getIndices();
+        }
+        var tmpV = [];
+        for (var i = 0; i < vertices.length; i++) {
+            tmpV[i] = vertices[indices[i]];
+        }
+        vertices = tmpV;
+        tracePoint = { x: Math.random() * c.width, y: Math.random() * c.height };
+
+        redrawCanvas(true);
+    }
+
+    function resetCanvas() {
+        tracePointMovement = movePctSlider.getValue();
+        resetCountAndStopTrace();
+        redrawCanvas(true);
+    }
+
+    function togglePlay() {
+        if (timeout === undefined) {
+            startTrace();
+            //document.getElementById("playButton").innerText = "Pause";
+            document.getElementById("playButton").style = "display: none;";
+            document.getElementById("pauseButton").style = "display: inline;";
+        } else {
+            stopTrace();
+            document.getElementById("playButton").style = "display: inline;";
+            document.getElementById("pauseButton").style = "display: none;";
+        }
+    }
+
+    function stepTrace() {
+        stopTrace();
+        moveTracePoint();
+    }
+
+    function startTrace() {
+        stepTrace();
+        timeout = setTimeout(startTrace, 1);
+    }
+
+    function stopTrace() {
+        if (timeout !== undefined) {
+            clearTimeout(timeout);
+            timeout = undefined;
+        }
+    }
+
+    function moveTracePoint() {
+        var randomVertex = vertices.randomElement();
+        var dx = randomVertex.x - tracePoint.x;
+        var dy = randomVertex.y - tracePoint.y;
+        tracePoint.x += dx * tracePointMovement / 100.0;
+        tracePoint.y += dy * tracePointMovement / 100.0;
+        redrawCanvas(false);
+        traceCount++;
+        document.getElementById("traceCount").innerText = traceCount;
+    }
+
+    function redrawCanvas(clear) {
+        if (clear) { ctx.clearRect(0, 0, c.width, c.height); }
+        ctx.strokeStyle = '#000000';
+
+        if (selectedVertex === -1) {
+            ctx.strokeStyle = '#990099';
+            ctx.lineWidth = 7;
+            ctx.beginPath();
+            ctx.arc(tracePoint.x, tracePoint.y, 3, 0, 2 * Math.PI);
+            ctx.closePath();
+            ctx.stroke();
+        } else {
+            for (var i = 0; i < vertices.length; i++) {
+                ctx.strokeStyle = selectedVertex == i ? '#009999' : '#000000';
+                ctx.lineWidth = selectedVertex === i ? 7 : 1;
+                ctx.beginPath();
+                ctx.arc(vertices[i].x, vertices[i].y, 3, 0, 2 * Math.PI);
+                ctx.closePath();
+                ctx.stroke();
+            }
+        }
+
+        if (vertices.length > 0) {
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(vertices[0].x, vertices[0].y);
+            for (var i = 1; i < vertices.length; i++) {
+                ctx.lineTo(vertices[i].x, vertices[i].y);
+            }
+            ctx.lineTo(vertices[0].x, vertices[0].y);
+            ctx.closePath();
+            ctx.stroke();
+        }
+
+        ctx.strokeStyle = '#993366';
+        ctx.beginPath();
+        ctx.arc(tracePoint.x, tracePoint.y, 1, 0, 2 * Math.PI);
+        ctx.stroke();
+    }
+
+    function getOffsetCoords(e) {
+        var element = c;
+        var offsetX = 0, offsetY = 0
+
+        if (element.offsetParent) {
+            do {
+                offsetX += element.offsetLeft;
+                offsetY += element.offsetTop;
+            } while ((element = element.offsetParent));
+        }
+
+        return { x: e.pageX - offsetX, y: e.pageY - offsetY };
+    }
+
+    function onCanvasMouseDown(e) {
+        if (timeout !== undefined) { return; }
+        isMouseDown = true;
+        var v = getOffsetCoords(e);
+        if (selectedVertex === undefined) {
+            var dx = v.x - tracePoint.x;
+            var dy = v.y - tracePoint.y;
+            var dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 5) {
+                selectedVertex = -1;
+                redrawCanvas(true);
+                return;
+            }
+            for (var i = 0; i < vertices.length; i++) {
+                dx = v.x - vertices[i].x;
+                dy = v.y - vertices[i].y;
+                dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 5) {
+                    selectedVertex = i;
+                    redrawCanvas(true);
+                    break;
+                }
+            }
+        }
+    }
+
+    function onCanvasMouseUp(e) {
+        if (timeout !== undefined) { return; }
+        isMouseDown = false;
+        selectedVertex = undefined;
+        redrawCanvas(true);
+    }
+
+    function onCanvasMouseMove(e) {
+        if (timeout !== undefined) { return; }
+        if (isMouseDown && selectedVertex !== undefined) {
+            var v = getOffsetCoords(e);
+            if (selectedVertex === -1) {
+                tracePoint = v;
+            } else {
+                vertices[selectedVertex] = v;
+            }
+            redrawCanvas(true);
+        }
+    }
+
+    function setPresetTriangle() {
+        resetCountAndStopTrace();
+        movePctSlider.setValue(50);
+        vertexCountSlider.setValue(3);
+        vertices = []
+        vertices[0] = { x: c.width / 2, y: 9 };
+        vertices[1] = { x: 9, y: c.height - 10 };
+        vertices[2] = { x: c.width - 10, y: c.height - 10 };
+        resetCanvas();
+    }
+
+    function setPresetSquare() {
+        resetCountAndStopTrace();
+        movePctSlider.setValue(70);
+        vertexCountSlider.setValue(4);
+        vertices = []
+        vertices[0] = { x: 9, y: 9 };
+        vertices[1] = { x: c.width - 10, y: 9 };
+        vertices[2] = { x: c.width - 10, y: c.height - 10 };
+        vertices[3] = { x: 9, y: c.height - 10 };
+        resetCanvas();
+    }
+
+    Array.prototype.randomElement = function () {
+        return this[Math.floor(Math.random() * this.length)]
+    }
+    </script>
+</body>
+</html>
