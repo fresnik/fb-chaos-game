@@ -92,6 +92,7 @@
     var traceCount = 0;
     var tracePointMovement = 0.5;
     var movePctSlider, vertexCountSlider, avgCountSlider;
+    var hull = new ConvexHull();
 
     $(function() {
         $("#movePct").slider().on("slideStart", function() { resetCanvas(); });
@@ -125,12 +126,11 @@
             for (var i = 0; i < vc; i++) {
                 vertices[i] = { x: Math.random() * c.width, y: Math.random() * c.height };
             }
-            var hull = new ConvexHull();
             hull.compute(vertices);
             indices = hull.getIndices();
         }
         var tmpV = [];
-        for (var i = 0; i < vertices.length; i++) {
+        for (var i = 0; i < indices.length; i++) {
             tmpV[i] = vertices[indices[i]];
         }
         vertices = tmpV;
@@ -281,6 +281,14 @@
         if (timeout !== undefined) { return; }
         if (selectedVertex !== undefined) {
             selectedVertex = undefined;
+
+            hull.compute(vertices);
+            indices = hull.getIndices();
+            var tmpV = [];
+            for (var i = 0; i < indices.length; i++) { tmpV[i] = vertices[indices[i]]; }
+            vertices = tmpV;
+            vertexCountSlider.setValue(vertices.length);
+
             redrawCanvas(true);
         }
         selectedVertex = undefined;
@@ -295,6 +303,7 @@
             } else {
                 vertices[selectedVertex] = v;
             }
+
             redrawCanvas(true);
         }
     }
