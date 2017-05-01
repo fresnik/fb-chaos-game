@@ -20,7 +20,7 @@
 
     <div class="col-md-5 col-xs-9" style="border:1px solid black;background-color:#FFFFFF">
     <br/>
-        <div>
+        <div style="height:60px;">
             <button class="btn btn-default" onclick="resetCanvas();"><span title="Reset" class="glyphicon glyphicon-remove"></span></button>
             <button class="btn btn-default" onclick="randomizeVertices();"><span title="Randomize" class="glyphicon glyphicon-random"></span></button>
             <button class="btn btn-info" onclick="togglePlay();" id="playButton"><span title="Play" class="glyphicon glyphicon-play"></span></button>
@@ -28,18 +28,18 @@
             <button class="btn btn-default" onclick="stepTrace();"><span title="Step" class="glyphicon glyphicon-step-forward"></span></button>
             <input type="hidden" id="randomSeed" value="1337" />
         </div>
-        <div class="row">
+        <div class="row" style="height:30px;">
             <div class="col-md-4">Trace count:</div>
             <div class="col-md-8"><span id="traceCount">0</span></div>
         </div>
-        <div class="row">
+        <div class="row" style="height:30px;">
             <div class="col-md-4">Movement:</div>
             <div class="col-md-8">
                 <input type="text" class="span2" id="movePct" value="" data-slider-min="0" data-slider-max="100" data-slider-step="5" data-slider-value="50" data-slider-orientation="horizontal" data-slider-selection="after" data-slider-tooltip="show">
                 &nbsp;<span data-toggle="tooltip" title="How far (in percentage) the tracepoint should move towards a vertex" class="glyphicon glyphicon-question-sign"></span>
             </div>
         </div>
-        <div class="row">
+        <div class="row" style="height:30px;">
             <div class="col-md-4">Vertex count:</div>
             <div class="col-md-8">
                 <input type="text" class="span2" id="vertexCount" value="" data-slider-min="3" data-slider-max="10" data-slider-step="1" data-slider-value="5" data-slider-orientation="horizontal" data-slider-selection="after" data-slider-tooltip="show">
@@ -161,7 +161,12 @@
         var dy = randomVertex.y - tracePoint.y;
         tracePoint.x += dx * tracePointMovement / 100.0;
         tracePoint.y += dy * tracePointMovement / 100.0;
-        redrawCanvas(false);
+
+        ctx.strokeStyle = '#993366';
+        ctx.beginPath();
+        ctx.arc(tracePoint.x, tracePoint.y, 1, 0, 2 * Math.PI);
+        ctx.stroke();
+
         traceCount++;
         document.getElementById("traceCount").innerText = traceCount;
     }
