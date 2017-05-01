@@ -13,51 +13,63 @@
 </head>
 <body style="background-color:#CCCCDD">
     <div class="container" style="margin-top:10px">
-    <div class="row">
-    <div class="col-md-7 col-xs-9">
-        <canvas id="myCanvas" width="500" height="500" style="border:1px solid black;background-color:#FFFFFF"></canvas>
-    </div>
+        <div class="row">
+            <div class="col-md-7 col-xs-9">
+                <canvas id="myCanvas" width="500" height="500" style="border:1px solid black;background-color:#FFFFFF"></canvas>
+            </div>
 
-    <div class="col-md-5 col-xs-9" style="border:1px solid black;background-color:#FFFFFF">
-    <br/>
-        <div style="height:60px;">
-            <button class="btn btn-default" onclick="resetCanvas();"><span title="Reset" class="glyphicon glyphicon-remove"></span></button>
-            <button class="btn btn-default" onclick="randomizeVertices();"><span title="Randomize" class="glyphicon glyphicon-random"></span></button>
-            <button class="btn btn-info" onclick="togglePlay();" id="playButton"><span title="Play" class="glyphicon glyphicon-play"></span></button>
-            <button class="btn btn-info" onclick="togglePlay();" id="pauseButton" style="display:none;"><span title="Pause" class="glyphicon glyphicon-pause"></span></button>
-            <button class="btn btn-default" onclick="stepTrace();"><span title="Step" class="glyphicon glyphicon-step-forward"></span></button>
-            <input type="hidden" id="randomSeed" value="1337" />
-        </div>
-        <div class="row" style="height:30px;">
-            <div class="col-md-4">Trace count:</div>
-            <div class="col-md-8"><span id="traceCount">0</span></div>
-        </div>
-        <div class="row" style="height:30px;">
-            <div class="col-md-4">Movement:</div>
-            <div class="col-md-8">
-                <input type="text" class="span2" id="movePct" value="" data-slider-min="0" data-slider-max="100" data-slider-step="5" data-slider-value="50" data-slider-orientation="horizontal" data-slider-selection="after" data-slider-tooltip="show">
-                &nbsp;<span data-toggle="tooltip" title="How far (in percentage) the tracepoint should move towards a vertex" class="glyphicon glyphicon-question-sign"></span>
+            <div class="col-md-5 col-xs-9">
+                <div class="row">
+                    <div class="cold-md-12" style="border:1px solid black;background-color:#FFFFFF;padding:10px;margin:10px">
+                        <br/>
+                        <div style="height:60px;">
+                            <button class="btn btn-default" onclick="stepTrace();"><span title="Step" class="glyphicon glyphicon-step-forward"></span></button>
+                            <button class="btn btn-info" onclick="togglePlay();" id="playButton"><span title="Play" class="glyphicon glyphicon-play"></span></button>
+                            <button class="btn btn-info" onclick="togglePlay();" id="pauseButton" style="display:none;"><span title="Pause" class="glyphicon glyphicon-pause"></span></button>
+                            <button class="btn btn-default" onclick="randomizeVertices();"><span title="Randomize" class="glyphicon glyphicon-random"></span></button>
+                            <button class="btn btn-default" onclick="resetCanvas();"><span title="Reset" class="glyphicon glyphicon-remove"></span></button>
+                        </div>
+                        <div class="row" style="padding:5px;">
+                            <div class="col-md-4">Trace count:</div>
+                            <div class="col-md-8"><span id="traceCount">0</span></div>
+                        </div>
+                        <div class="row" style="padding:5px;">
+                            <div class="col-md-4">Movement:</div>
+                            <div class="col-md-8">
+                                <input type="text" class="span2" id="movePct" value="" data-slider-min="0" data-slider-max="100" data-slider-step="5" data-slider-value="50" data-slider-orientation="horizontal" data-slider-selection="after" data-slider-tooltip="show">
+                                &nbsp;<span data-toggle="tooltip" title="How far (in percentage) the tracepoint should move towards a vertex" class="glyphicon glyphicon-question-sign"></span>
+                            </div>
+                        </div>
+                        <div class="row" style="padding:5px;">
+                            <div class="col-md-4">Vertex count:</div>
+                            <div class="col-md-8">
+                                <input type="text" class="span2" id="vertexCount" value="" data-slider-min="3" data-slider-max="10" data-slider-step="1" data-slider-value="3" data-slider-orientation="horizontal" data-slider-selection="after" data-slider-tooltip="show">
+                            </div>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-default dropdown-toggle" type="button" id="presetMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                                Presets
+                                <span class="caret"></span>
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="presetMenu">
+                                <li><a href="#" onclick="setPresetTriangle();">Triangle</a></li>
+                                <li><a href="#" onclick="setPresetSquare();">Square</a></li>
+                            </ul>
+                        </div>
+                        <br/>
+                    </div>
+                    <div class="cold-md-12" style="border:1px solid black;background-color:#FFFFFF;padding:10px;margin:10px">
+                        <h3>What is this?</h3>
+                        <p>Heavily inspired by the <a href="https://youtu.be/kbKtFN71Lfs" target="_blank">Numberphile video</a> of the same name.</p>
+                        <p>The board contains a <strong style="color:#993366">tracepoint</strong> and a number of <strong>vertices</strong> of a polygon. You can move these around.</p>
+                        <p>Each step (<span title="Step" class="glyphicon glyphicon-step-forward"></span>), the tracepoint is moved towards a random vertex by the specified amount.</p>
+                        <p>Press <span title="Play" class="glyphicon glyphicon-play"></span> to step automatically.</p>
+                        <p>Press <span title="Randomize" class="glyphicon glyphicon-random"></span> to randomize the board.</p>
+                        <p>Press <span title="Reset" class="glyphicon glyphicon-remove"></span> to clear the board.</p>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="row" style="height:30px;">
-            <div class="col-md-4">Vertex count:</div>
-            <div class="col-md-8">
-                <input type="text" class="span2" id="vertexCount" value="" data-slider-min="3" data-slider-max="10" data-slider-step="1" data-slider-value="5" data-slider-orientation="horizontal" data-slider-selection="after" data-slider-tooltip="show">
-            </div>
-        </div>
-        <div class="dropdown">
-            <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-                Presets
-                <span class="caret"></span>
-            </button>
-            <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
-                <li><a href="#" onclick="setPresetTriangle();">Triangle</a></li>
-                <li><a href="#" onclick="setPresetSquare();">Square</a></li>
-            </ul>
-        </div>
-    <br/>
-    </div>
-    </div>
     </div>
 
     <script>
@@ -70,7 +82,6 @@
     c.addEventListener("mouseup", onCanvasMouseUp, false);
     var timeout = undefined;
     var selectedVertex = undefined;
-    var isMouseDown = false;
     var traceCount = 0;
     var tracePointMovement = 0.5;
     var movePctSlider, vertexCountSlider;
@@ -81,7 +92,8 @@
         $("#vertexCount").slider().on("slideStart", function() { resetCanvas(); });
         vertexCountSlider = $("#vertexCount").slider().on("slideStop", function(ev) { randomizeVertices(); resetCanvas(); }).data('slider');
         $('[data-toggle="tooltip"]').tooltip(); 
-        setPresetTriangle();
+        randomizeVertices();
+        resetCanvas();
     });
 
     function resetCountAndStopTrace() {
@@ -97,7 +109,6 @@
         resetCountAndStopTrace();
 
         var vc = vertexCountSlider.getValue();
-        console.log(vc);
         vertices = [];
         var indices = undefined;
 
@@ -228,7 +239,6 @@
 
     function onCanvasMouseDown(e) {
         if (timeout !== undefined) { return; }
-        isMouseDown = true;
         var v = getOffsetCoords(e);
         if (selectedVertex === undefined) {
             var dx = v.x - tracePoint.x;
@@ -254,14 +264,16 @@
 
     function onCanvasMouseUp(e) {
         if (timeout !== undefined) { return; }
-        isMouseDown = false;
+        if (selectedVertex !== undefined) {
+            selectedVertex = undefined;
+            redrawCanvas(true);
+        }
         selectedVertex = undefined;
-        redrawCanvas(true);
     }
 
     function onCanvasMouseMove(e) {
         if (timeout !== undefined) { return; }
-        if (isMouseDown && selectedVertex !== undefined) {
+        if (selectedVertex !== undefined) {
             var v = getOffsetCoords(e);
             if (selectedVertex === -1) {
                 tracePoint = v;
