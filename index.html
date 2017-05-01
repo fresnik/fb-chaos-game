@@ -34,6 +34,13 @@
                             <div class="col-md-8"><span id="traceCount">0</span></div>
                         </div>
                         <div class="row" style="padding:5px;">
+                            <div class="col-md-4">Average count:</div>
+                            <div class="col-md-8">
+                                <input type="text" class="span2" id="avgCount" value="" data-slider-min="1" data-slider-max="25" data-slider-step="1" data-slider-value="1" data-slider-orientation="horizontal" data-slider-selection="after" data-slider-tooltip="show">
+                                &nbsp;<span data-toggle="tooltip" title="Take the average of this many steps in one step" class="glyphicon glyphicon-question-sign"></span>
+                            </div>
+                        </div>
+                        <div class="row" style="padding:5px;">
                             <div class="col-md-4">Movement:</div>
                             <div class="col-md-8">
                                 <input type="text" class="span2" id="movePct" value="" data-slider-min="0" data-slider-max="100" data-slider-step="5" data-slider-value="50" data-slider-orientation="horizontal" data-slider-selection="after" data-slider-tooltip="show">
@@ -84,14 +91,16 @@
     var selectedVertex = undefined;
     var traceCount = 0;
     var tracePointMovement = 0.5;
-    var movePctSlider, vertexCountSlider;
+    var movePctSlider, vertexCountSlider, avgCountSlider;
 
     $(function() {
         $("#movePct").slider().on("slideStart", function() { resetCanvas(); });
         movePctSlider = $("#movePct").slider().on("slideStop", function(ev) { resetCanvas(); }).data('slider');
         $("#vertexCount").slider().on("slideStart", function() { resetCanvas(); });
         vertexCountSlider = $("#vertexCount").slider().on("slideStop", function(ev) { randomizeVertices(); resetCanvas(); }).data('slider');
-        $('[data-toggle="tooltip"]').tooltip(); 
+        $("#avgCount").slider().on("slideStart", function() { resetCanvas(); });
+        avgCountSlider = $("#avgCount").slider().on("slideStop", function(ev) { resetCanvas(); }).data('slider');
+        $('[data-toggle="tooltip"]').tooltip();
         randomizeVertices();
         resetCanvas();
     });
@@ -167,11 +176,17 @@
     }
 
     function moveTracePoint() {
-        var randomVertex = vertices.randomElement();
-        var dx = randomVertex.x - tracePoint.x;
-        var dy = randomVertex.y - tracePoint.y;
-        tracePoint.x += dx * tracePointMovement / 100.0;
-        tracePoint.y += dy * tracePointMovement / 100.0;
+        var totaldx = 0.0;
+        var totaldy = 0.0;
+        var count = avgCountSlider.getValue();;
+
+        for (var i = 0; i < count; i++) {
+            var randomVertex = vertices.randomElement();
+            totaldx += randomVertex.x - tracePoint.x;
+            totaldy += randomVertex.y - tracePoint.y;;
+        }
+        tracePoint.x += (totaldx / count) * tracePointMovement / 100.0;
+        tracePoint.y += (totaldy / count) * tracePointMovement / 100.0;
 
         ctx.strokeStyle = '#993366';
         ctx.beginPath();
