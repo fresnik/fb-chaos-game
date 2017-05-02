@@ -164,7 +164,7 @@
     }
 
     function startTrace() {
-        stepTrace();
+        for (var i = 0; i < 3; i++) { stepTrace(); }
         timeout = setTimeout(startTrace, 1);
     }
 
